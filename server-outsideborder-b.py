@@ -3,6 +3,7 @@ import select
 import socket
 import struct
 from socketserver import ThreadingMixIn, TCPServer, StreamRequestHandler
+import ipfilter
 
 logging.basicConfig(level=logging.DEBUG)
 SOCKS_VERSION = 5
@@ -36,6 +37,9 @@ class SocksProxy(StreamRequestHandler):
 
     def handle(self):
         logging.info('Accepting connection from %s:%s' % self.client_address)
+        if not ipfilter.ipfilter(self.client_address[0]):
+            self.server.close_request(self.request)
+            logging.info('ipfilter return false %s:%s' % self.client_address)
         remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         remote.connect(('127.0.0.1', 9011))
         self.exchange_loop(self.connection, remote)
